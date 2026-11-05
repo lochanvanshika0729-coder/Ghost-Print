@@ -31,7 +31,7 @@ async def lifespan(app: FastAPI):
     app.state.audit_engine = engine
     app.state.local_ai = LocalAIService(deterministic_engine=engine)
     with SessionLocal() as db:
-        for entry in engine.dataset()["manifest"]:
+        for entry in engine.manifest:
             row = db.get(DatasetFile, entry["file_id"])
             values = {"file_path":entry["file_path"],"captured_at":entry["captured_at"],
                       "readable":int(entry["readable"]),"error":entry["error"]}
@@ -248,7 +248,7 @@ def ai_explanation(case_id: str):
 def evidence(case_id: str):
     result=get_case(case_id)
     refs={step.get("evidence_id") for step in result["steps"] if step.get("evidence_id")}
-    return [item for item in service().dataset()["manifest"] if item["file_id"] in refs]
+    return [item for item in service().manifest if item["file_id"] in refs]
 
 
 @app.get("/api/investigations/{case_id}/timeline")
