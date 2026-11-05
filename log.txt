@@ -1088,233 +1088,203 @@ Correction: the preceding merge-resolution entry was appended with a timestamp l
 Merge completion addendum for the 2026-11-04T21:27:25Z entry:
 Created merge commit c4ef81de (Merge origin/main into feature/frontend). The working tree is clean; feature/frontend is ahead of origin/feature/frontend by four commits. No test suite was run.
 
-## [2026-11-05T03:18:41+05:30] SESSION START
+## [2026-11-04T22:20:39Z] SESSION START
 
 tool=Codex
 model=GPT-6
-Repo Root: C:\Users\tania\OneDrive\Documents\Pictures\Desktop\HACKOWEEN\hackerrank-orchestrate-october26
-Branch: unknown
-Worktree: C:\Users\tania\OneDrive\Documents\Pictures\Desktop\HACKOWEEN\hackerrank-orchestrate-october26
+Repo Root: /workspaces/Ghost-Print
+Branch: feature/frontend
+Worktree: main
 Parent Agent: none
-Language: custom:Node.js and Python
+Language: custom:multi
 Time Remaining: not configured
 
-## [2026-11-05T03:49:47+05:30] Implement local Ollama and evidence RAG backend
+## [2026-11-04T22:21:40Z] Inspect backend upgrade architecture
 
 User Prompt (verbatim, secrets redacted):
-[Pasted text attachment: "# GHOSTGUARD: ADVANCED LOCAL LLM + RAG BACKEND IMPLEMENTATION"; no additional typed request.]
+We are beginning the backend upgrade for GHOSTGUARD.
+
+IMPORTANT: Do not modify any files yet. Do not write or generate implementation code.
+
+I want you to inspect the existing repository thoroughly before making changes.
+
+My goal is to integrate:
+1. A locally hosted open-weight LLM using Ollama.
+2. A real RAG pipeline for retrieving relevant deletion evidence and policies.
+3. AI-assisted evidence interpretation and classification.
+4. A deterministic policy engine that remains the final authority for deletion status.
+5. Integration with the existing Node.js backend.
+
+STRICT RULE: Do not modify the frontend. Do not change HTML, CSS, frontend JavaScript, React components, UI, animations, or existing layouts.
+
+First inspect existing backend/API routes; deletion analysis; dataset CSV schemas; evidence processing; dependencies/configuration; output generation/validation; Python and Node versions; and Ollama/local-model availability. Then report the architecture, reusable and missing pieces, exact intended file changes, compatibility risks, and a staged plan beginning with the smallest working milestone. Do not implement until I approve. Do not assume documented features exist without inspecting them.
 
 Agent Response Summary:
-Replaced hosted LLM configuration with local-only Ollama/Qwen3 settings and integrated the Node backend with local chat and embeddings. Added exact case/identity/history retrieval, evidence chunking and deduplicated cosine-search cache, cutoff filtering, source provenance, structured model output validation, loopback/origin checks, and evidence-only advisory findings. Deterministic status and remediation output remain authoritative. The Node implementation and packaging were verified; actual Qwen inference and FastAPI execution could not be tested because Ollama and Python are unavailable in this environment.
+Inspected backend source, routes, dataset CSV schemas and counts, evidence formats/readers, dependency/configuration files, output generator and structural validator, runtime versions, local Ollama availability, and current Git worktree state. Found existing Node deterministic analysis/export, separate FastAPI deterministic backend, and an optional Python Ollama/RAG/interpreter service proxied by Node; no code was changed. The output template currently has 518 rows, the expected schema, and three status categories.
 
 Actions:
-* Updated code/ai-provider.js, code/rag.js, code/server.js, code/backend/ai_provider.py, code/backend/main.py, code/.env.example, code/.gitignore, code/package.json, code/README.md, and evaluation reports; added local evaluation harness and AI/RAG tests. No frontend files changed.
-* Ran `node --check` on Node modules; 19 Node tests passed. Public sample baseline measured 22/32 statuses, 1/32 exact sequences, 16/193 exact steps, and 314/483 field matches. Regenerated and structurally validated root output.csv (518 rows).
-* Evaluated local-AI integration on 32 sample cases: Ollama connection unavailable, zero inference responses/tokens; no model accuracy claim. Verified live http://localhost:8001 routes: local health unavailable, exact evidence retrieval available, untrusted Origin receives 403.
-* Refreshed code.zip and verified it contains 36 entries and excludes dataset, secrets, databases, uploads, dependency caches, and the local RAG cache.
-* PDF text extraction succeeded for four supplied PDFs via local pdftotext; Tesseract OCR is not installed.
+* Read-only repository and runtime inspection; appended required session and turn log entries.
 
 Context:
 tool=Codex
 model=GPT-6
-branch=unknown
-repo_root=C:\Users\tania\OneDrive\Documents\Pictures\Desktop\HACKOWEEN\hackerrank-orchestrate-october26
-worktree=C:\Users\tania\OneDrive\Documents\Pictures\Desktop\HACKOWEEN\hackerrank-orchestrate-october26
+branch=feature/frontend
+repo_root=/workspaces/Ghost-Print
+worktree=main
 parent_agent=none
-
-## [2026-11-05T07:15:32+05:30] Undo local Ollama and RAG backend changes
-
-User Prompt (verbatim, secrets redacted):
-undo the backend changes you did
-
-Agent Response Summary:
-Reverted the code and archive edits from the previous local-Ollama/RAG task to the repository's prior committed state. Preserved the earlier Data Lineage work and the append-only conversation log. Restarted the local Node website on port 8001 using the restored backend.
-
-Actions:
-* Restored code.zip, code/.env.example, code/.gitignore, code/README.md, code/ai-provider.js, code/backend/ai_provider.py, code/backend/main.py, code/evaluation/evaluation_report.md, code/evaluation/usage_report.md, code/package.json, and code/server.js from HEAD.
-* Removed the Ollama/RAG-only additions code/rag.js, code/evaluation/evaluate-local-ai.js, code/evaluation/local_llm_report.json, code/test/ai-provider.test.js, and code/test/rag.test.js.
-* Kept this log append; `git status --short` shows only log.txt modified.
-* Restarted the restored Node backend at http://localhost:8001.
-
-Context:
-tool=Codex
-model=GPT-6
-branch=unknown
-repo_root=C:\Users\tania\OneDrive\Documents\Pictures\Desktop\HACKOWEEN\hackerrank-orchestrate-october26
-worktree=C:\Users\tania\OneDrive\Documents\Pictures\Desktop\HACKOWEEN\hackerrank-orchestrate-october26
-parent_agent=none
-
-## [2026-11-05T07:32:05+05:30] Add premium public GhostGuard landing page
-
-User Prompt (verbatim, secrets redacted):
-Create a premium GhostGuard landing page and retain the dashboard's exact visual colour identity. Reuse actual CSS tokens, with deep charcoal, antique gold, bronze, warm ivory, and muted warm neutrals; avoid bright blue, neon, green cybersecurity styling, purple gradients, and white sections.
-
-Agent Response Summary:
-Added a responsive public landing page at `/` using the existing premium design tokens, typefaces, logo identity, and astronomical wallpaper. The existing application remains available at `/dashboard`; calls to action lead to the real workspace and module routes. Documented that the workspace has no sign-in/registration flow rather than adding a fictitious one.
-
-Actions:
-* Added code/frontend/landing.html, landing.css, and landing.js with semantic sections, accessible navigation, reduced-motion handling, responsive styles, an evidence illustration, and a live embedded workspace preview with selectors for existing modules.
-* Updated code/server.js to serve the landing page at `/` and the existing SPA at `/dashboard`; updated code/README.md with both URLs.
-* `node --check server.js` and `node --check frontend/landing.js` succeeded. Live HTTP smoke checks on port 8123 returned 200 for `/`, `/dashboard`, landing assets, premium.css, and wallpaper.svg; all six module links were present. No browser executable was available for screenshot-based visual QA.
-* Restarted the local Node website on port 8001 with the new routes.
-
-Context:
-tool=Codex
-model=GPT-6
-branch=unknown
-repo_root=C:\Users\tania\OneDrive\Documents\Pictures\Desktop\HACKOWEEN\hackerrank-orchestrate-october26
-worktree=C:\Users\tania\OneDrive\Documents\Pictures\Desktop\HACKOWEEN\hackerrank-orchestrate-october26
-parent_agent=none
-
-## [2026-11-05T07:36:17+05:30] Darken landing page backgrounds for legibility
-
-User Prompt (verbatim, secrets redacted):
-The landing page content looks too light and is not clearly visible against the background; make the background darker.
-
-Agent Response Summary:
-Darkened the public landing page by removing the full-page wallpaper image and using a solid charcoal base with a restrained plum glow. Replaced the wallpaper behind the principles panel with a dark charcoal/plum surface while preserving the existing antique-gold accents and typography.
-
-Actions:
-* Updated code/frontend/landing.css; kept shared palette tokens, responsive breakpoints, and reduced-motion rules.
-* HTTP checks on the live server confirmed `/`, `/landing.css`, and `/dashboard` return 200; `node --check frontend/landing.js` succeeded.
-* Browser-based screenshot review remains unavailable because no browser executable is installed.
-
-Context:
-tool=Codex
-model=GPT-6
-branch=unknown
-repo_root=C:\Users\tania\OneDrive\Documents\Pictures\Desktop\HACKOWEEN\hackerrank-orchestrate-october26
-worktree=C:\Users\tania\OneDrive\Documents\Pictures\Desktop\HACKOWEEN\hackerrank-orchestrate-october26
-parent_agent=none
-
-## [2026-11-05T07:40:17+05:30] Rename website to GHOST PRINT
-
-User Prompt (verbatim, secrets redacted):
-Change the name from GHOUSTGUARD TO GHOST PRINT
-
-Agent Response Summary:
-Renamed user-visible website branding to GHOST PRINT across the public landing page, dashboard, workspace headings, settings organization label, document titles, server health response, and server startup output. Kept internal API/global identifiers unchanged.
-
-Actions:
-* Updated code/frontend/landing.html, landing.js, landing.css, index.html, app.js, server.js, and README.md.
-* `node --check` passed for server.js, frontend/app.js, and frontend/landing.js. HTTP checks on the restarted port 8001 passed for `/`, `/dashboard`, and `/api/health`; each response showed GHOST PRINT branding.
-
-Context:
-tool=Codex
-model=GPT-6
-branch=unknown
-repo_root=C:\Users\tania\OneDrive\Documents\Pictures\Desktop\HACKOWEEN\hackerrank-orchestrate-october26
-worktree=C:\Users\tania\OneDrive\Documents\Pictures\Desktop\HACKOWEEN\hackerrank-orchestrate-october26
-parent_agent=none
-## [2026-11-05T08:28:49+05:30] SESSION START
+## [2026-11-05T01:46:08Z] SESSION START
 
 tool=Codex
 model=GPT-6
-Repo Root: C:\Users\tania\OneDrive\Documents\Pictures\Desktop\HACKOWEEN\hackerrank-orchestrate-october26
-Branch: unknown
-Worktree: C:\Users\tania\OneDrive\Documents\Pictures\Desktop\HACKOWEEN\hackerrank-orchestrate-october26
+Repo Root: /workspaces/Ghost-Print
+Branch: feature/frontend
+Worktree: /workspaces/Ghost-Print
 Parent Agent: none
-Language: custom:Python and JavaScript
+Language: custom:Node.js plus Python
 Time Remaining: not configured
 
-## [2026-11-05T08:36:45+05:30] Build standalone future RAG prototype
+## [2026-11-05T01:46:08Z] Read-only backend upgrade inspection
 
 User Prompt (verbatim, secrets redacted):
-[Pasted text attachment: "# TASK: Create an Independent Future RAG Implementation Prototype for GhostGuard"; requests a separate future_rag_prototype/ Python RAG demo, not integrated into existing app, with ingestion, chunking, open-source embeddings, local vector DB, optional configurable LLM, source citations, illustrative policies, update/re-index demonstration, README, and tests.]
+We are beginning the backend upgrade for GHOSTGUARD.
+
+IMPORTANT: Do not modify any files yet. Do not write or generate implementation code.
+
+I want you to inspect the existing repository thoroughly before making changes.
+
+My goal is to integrate:
+
+1. A locally hosted open-weight LLM using Ollama.
+2. A real RAG pipeline for retrieving relevant deletion evidence and policies.
+3. AI-assisted evidence interpretation and classification.
+4. A deterministic policy engine that remains the final authority for deletion status.
+5. Integration with the existing Node.js backend.
+
+STRICT RULE: Do not modify the frontend. Do not change HTML, CSS, frontend JavaScript, React components, UI, animations, or existing layouts.
+
+First inspect:
+
+- Existing backend architecture and API routes.
+- Current deletion analysis pipeline.
+- All dataset CSV files and their schemas.
+- Evidence file formats and how they are currently processed.
+- Existing dependencies and project configuration.
+- Current output CSV generation and validation.
+- Available Python and Node.js versions.
+- Whether Ollama or any local model is already installed or configured.
+
+Then give me:
+
+1. A clear explanation of the existing architecture.
+2. What can be reused.
+3. What needs to be added.
+4. The exact files you intend to create or modify.
+5. Any compatibility risks.
+6. A staged implementation plan, starting with the smallest working milestone.
+
+Do not implement anything until I approve the plan. Do not assume that features already exist just because they appear in the project documentation.
 
 Agent Response Summary:
-Created a standalone future RAG prototype at the repository root, separate from the current web application. It uses Sentence Transformers for local embeddings, FAISS for cosine retrieval, SQLite for persisted vectors and their source metadata, and an optional OpenAI-compatible LLM call. Without LLM configuration it prints retrieved passages as retrieval-only output, and the included sample policy files are explicitly fictional.
+Inspected the current repository without changing implementation files. The worktree already contains substantial uncommitted backend changes for Ollama, RAG, AI interpretation, Node proxy integration, and tests; these were present before inspection. The existing system also has a deterministic Node export engine and a separate FastAPI application/engine, so I reviewed their actual code and configuration rather than treating the documentation as proof of runtime readiness. Local Python AI dependencies, Ollama, and Tesseract are not installed or available in this environment.
 
 Actions:
-* Added future_rag_prototype/rag_implementation.py, requirements.txt, config.json, .env.example, .gitignore, README.md, four initial sample policies, and a separate sample_policy_updates/backup_retention_policy_v2.md.
-* Added a self-test CLI for chunking, source metadata persistence, and FAISS retrieval; documented explicit `--reindex`, date-aware version handling, installation, execution, architecture, limitations, and future integration boundaries.
-* Static Node checks validated config JSON, all five policy headers/content/dates, required pipeline functions, FAISS and retrieval-only paths, and absence of references from existing code. No existing application files were touched by this prototype task.
-* Could not run the Python self-test or end-to-end pipeline because this environment has no installed Python runtime (`py -3 --version`: “No installed Python found!”).
+* Read-only source, configuration, dataset schema, and runtime inspection.
+* Appended the required session and turn log entries to log.txt.
 
 Context:
 tool=Codex
 model=GPT-6
-branch=unknown
-repo_root=C:\Users\tania\OneDrive\Documents\Pictures\Desktop\HACKOWEEN\hackerrank-orchestrate-october26
-worktree=C:\Users\tania\OneDrive\Documents\Pictures\Desktop\HACKOWEEN\hackerrank-orchestrate-october26
+branch=feature/frontend
+repo_root=/workspaces/Ghost-Print
+worktree=/workspaces/Ghost-Print
 parent_agent=none
 
-## [2026-11-05T08:55:50+05:30] Add investigation modules and Forensics workspace
+## [2026-11-05T01:51:16Z] Trace existing AI backend setup
 
 User Prompt (verbatim, secrets redacted):
-Implement CSV/evidence ingestion and current/historical identity resolution (`ingestion.py`, `identity.py`); evidence reading and evidence-backed findings (`evidence_reader.py`, `investigator.py`); use environment-based AI API keys; add an aggregate risk heat map, 30-day ghost-record line chart, and two-case comparison to the Forensic Case Investigator/Forensics view.
+We have completed the initial repository inspection. Now I want to move to implementation milestone 1.
+
+IMPORTANT CONTEXT:The worktree already contains substantial uncommitted AI backend changes. These existed before your inspection. Preserve every existing change. Do not reset, overwrite, delete, or recreate existing files.
+
+Our goal is to get the EXISTING implementation running, not rebuild it.
+
+FRONTEND RESTRICTION:Do not modify any frontend files, HTML, CSS, frontend JavaScript, React components, animations, layouts, or assets.
+
+TASK:
+
+1. Inspect the existing AI backend implementation in:
+
+- code/backend/main.py
+- code/backend/ai_service/
+- code/ai-provider.js
+- code/server.js
+- code/requirements-ai.txt
+- code/package.json
+- package.json
+
+2. Trace the complete request flow:   Node API → Python FastAPI → RAG retrieval → Ollama → evidence interpretation → deterministic validation.
+3. Identify:
+
+- Missing dependencies.
+- Python version incompatibilities, especially Python 3.14.
+- Import errors and incorrect module paths.
+- Missing environment variables.
+- Incorrect API URLs or ports.
+- Missing model configuration.
+- Missing database/index initialization.
+- Any code paths that could fail at runtime.
+
+4. Determine the safest supported Python version for the existing dependencies. Do not downgrade or replace the existing environment without approval.
+5. Inspect how Ollama is configured. Confirm whether the current implementation supports local Ollama in Codespaces and what network configuration is required.
+6. Check whether the AI service can start independently of Ollama and whether its health endpoint works without a model.
+7. Verify that AI findings cannot independently change the final deletion status or invent evidence references.
+8. Give me an exact, ordered setup procedure with terminal commands.
+
+RULES:
+
+- Do not modify files yet.
+- Do not install dependencies yet.
+- Do not download models yet.
+- Do not change the frontend.
+- Do not replace existing architecture.
+- Do not claim a test passed unless you actually ran it.
+
+At the end, tell me the FIRST command I should execute to begin setting up the existing backend.
 
 Agent Response Summary:
-Added the requested backend modules under `code/backend` and wired the FastAPI audit engine through them. Added a Forensics workspace tab with a cross-case system/risk heat map, drill-down links, a ghost-record trend over the latest 30 audit days in the loaded dataset, and side-by-side comparison of two selected cases. The aggregate API omits subject identifiers; case-level AI continues to use the existing `LLM_API_KEY` environment configuration without hard-coded secrets.
+Traced the Node AI proxy, FastAPI routes, RAG ingestion/retrieval, Ollama chat and optional embedding calls, finding validation, and deterministic response path. Confirmed Python 3.14.2 has no installed backend dependencies, while Python 3.12.3 is available; inspected official package release metadata and recommend 3.12 as the conservative environment for the existing pins. Found Ollama and Tesseract unavailable, but static startup paths indicate FastAPI can initialize without Ollama if Python dependencies are installed; health reports Ollama unavailable rather than requiring it. No install, model download, implementation change, or test was performed. The only write was this required log entry.
 
 Actions:
-* Added code/backend/ingestion.py, identity.py, evidence_reader.py, and investigator.py; refactored code/backend/engine.py to use them and expanded the identity response schema for known/historical identifiers.
-* Added `/api/forensics/aggregate` to the Node and FastAPI services, including a minimal case/resource/date response without emails; wired the API client and added the Forensics navigation/page/styles in code/frontend/index.html, app.js, and forensics.css. Added Forensics to the landing-page preview controls and documented the route/page in code/README.md.
-* Restarted the local Node website at http://localhost:8001. No test suite was run in this turn.
+* Read-only source/configuration inspection and environment/version probes; consulted official PyPI metadata for Python compatibility.
+* Appended required per-turn entry to log.txt.
 
 Context:
 tool=Codex
 model=GPT-6
-branch=unknown
-repo_root=C:\Users\tania\OneDrive\Documents\Pictures\Desktop\HACKOWEEN\hackerrank-orchestrate-october26
-worktree=C:\Users\tania\OneDrive\Documents\Pictures\Desktop\HACKOWEEN\hackerrank-orchestrate-october26
+branch=feature/frontend
+repo_root=/workspaces/Ghost-Print
+worktree=/workspaces/Ghost-Print
 parent_agent=none
 
-## [2026-11-05T09:02:00+05:30] Provide local website URL
+## [2026-11-05T05:43:44Z] Finish backend integration verification
 
 User Prompt (verbatim, secrets redacted):
-give me url
+User provided the attached “GHOSTGUARD | FINAL HACKATHON COMPLETION” mission and asked me to take over remaining implementation and verification, preserve the existing uncommitted backend work, keep the frontend unchanged, generate and validate the final CSV, and not commit or push.
 
 Agent Response Summary:
-Provided the local website URL and the direct Forensics workspace URL.
+Continued with the existing backend implementation and preserved the pre-existing worktree changes. Python tests (27) and Node tests (3 files) passed; FastAPI/Ollama health, Node proxy health, dashboard, static frontend response, and case_37 evidence retrieval were exercised, and the exporter produced 518 rows accepted by the structural validator. The live case_37 AI investigation returned HTTP 503, and the 32-case sample evaluator remains weak (68.75% status accuracy and 3.125% step sequence accuracy), so I am not declaring the application evaluation-ready; the deterministic authority checks pass in unit tests. No frontend files were changed and no commit or push was made.
 
 Actions:
-* No code changes.
+* Ran Python pytest and Node test suites.
+* Queried live FastAPI, Ollama, Node health/dashboard, frontend root, and Node-proxied evidence retrieval.
+* Generated root output.csv with the existing Node exporter and ran the output validator.
+* Ran the existing sample evaluator and inspected the resulting worktree state.
+* Appended this required per-turn entry to log.txt.
 
 Context:
 tool=Codex
 model=GPT-6
-branch=unknown
-repo_root=C:\Users\tania\OneDrive\Documents\Pictures\Desktop\HACKOWEEN\hackerrank-orchestrate-october26
-worktree=C:\Users\tania\OneDrive\Documents\Pictures\Desktop\HACKOWEEN\hackerrank-orchestrate-october26
-parent_agent=none
-
-## [2026-11-05T09:08:00+05:30] Fix aggregate heat-map risk grouping
-
-User Prompt (verbatim, secrets redacted):
-why it is not showing anything [with heat-map screenshot]
-
-Agent Response Summary:
-Explained that cases with a stored UNKNOWN risk were being grouped as UNKNOWN instead of deriving risk from findings, and updated the Forensics aggregate view to derive the case risk when stored risk is absent or UNKNOWN.
-
-Actions:
-* Updated the Forensics heat map, case selectors, drilldown, and comparison header to share the derived risk value.
-* Asked the user to reload the Forensics page to see the corrected grouping. No tests were run.
-
-Context:
-tool=Codex
-model=GPT-6
-branch=unknown
-repo_root=C:\Users\tania\OneDrive\Documents\Pictures\Desktop\HACKOWEEN\hackerrank-orchestrate-october26
-worktree=C:\Users\tania\OneDrive\Documents\Pictures\Desktop\HACKOWEEN\hackerrank-orchestrate-october26
-parent_agent=none
-
-## [2026-11-05T09:15:00+05:30] Sync certificate table status after integrity verification
-
-User Prompt (verbatim, secrets redacted):
-it is showing verify integriity but in integrity it is showing not yet verifo\ied [with screenshot]
-
-Agent Response Summary:
-Fixed the certificate row so its integrity label updates when verification runs and reflects unavailable or failed results accurately.
-
-Actions:
-* Updated code/frontend/app.js certificate interactions: the clicked row now shows Verifying, Verified, Unavailable, or Verification failed; the action label reflects whether the recorded inputs verified.
-* No tests were run.
-
-Context:
-tool=Codex
-model=GPT-6
-branch=unknown
-repo_root=C:\Users\tania\OneDrive\Documents\Pictures\Desktop\HACKOWEEN\hackerrank-orchestrate-october26
-worktree=C:\Users\tania\OneDrive\Documents\Pictures\Desktop\HACKOWEEN\hackerrank-orchestrate-october26
+branch=feature/frontend
+repo_root=/workspaces/Ghost-Print
+worktree=/workspaces/Ghost-Print
 parent_agent=none

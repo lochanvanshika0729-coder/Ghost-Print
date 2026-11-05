@@ -6,12 +6,12 @@
   "scripts": {
     "dev": "node server.js",
     "start": "node server.js",
-    "api": "python -m uvicorn backend.main:app --app-dir . --reload --host 127.0.0.1 --port 8000",
+    "api": "python -m uvicorn backend.main:app --app-dir . --reload --host 127.0.0.1 --port 8001",
     "export": "node server.js --export",
     "test": "node --test test/*.test.js",
     "validate": "node validate-output.js",
     "evaluate:sample": "node server.js --evaluate-sample",
-    "test:api": "python -m pytest backend/test_engine.py"
+    "test:api": "python -m pytest backend/test_engine.py backend/ai_service/test_ai_service.py"
   },
   "engines": { "node": ">=20" }
 }

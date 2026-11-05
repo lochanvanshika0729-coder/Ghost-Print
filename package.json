@@ -8,12 +8,15 @@
     "dev": "node code/server.js",
     "dev:web": "vite --host 0.0.0.0",
     "dev:api": "node code/server.js",
+    "api": "npm --prefix code run api",
     "build:pattern-waves": "vite build --config vite.pattern-waves.config.mjs",
     "start": "node code/server.js",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
     "export": "node code/server.js --export",
-    "validate": "node code/validate-output.js"
+    "validate": "node code/validate-output.js",
+    "test": "npm --prefix code test",
+    "evaluate:sample": "npm --prefix code run evaluate:sample"
   },
   "engines": {
     "node": ">=20"
