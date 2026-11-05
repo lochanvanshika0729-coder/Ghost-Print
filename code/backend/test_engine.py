@@ -34,6 +34,11 @@ def test_sql_snapshot_reader_reads_only_in_memory_table_data():
     assert rows == [{"resource_id":"r1", "state":"ACTIVE", "collection_name":"records"}]
 
 
+def test_sql_snapshot_reader_allows_snapshot_pragmas_and_indexes():
+    rows = _safe_sql_snapshot("PRAGMA foreign_keys=ON; CREATE TABLE records(resource_id TEXT PRIMARY KEY, state TEXT); CREATE INDEX idx_records_state ON records(state); INSERT INTO records VALUES('r1','ACTIVE');")
+    assert rows == [{"resource_id":"r1", "state":"ACTIVE", "collection_name":"records"}]
+
+
 def test_sql_snapshot_reader_denies_external_database_attach():
     with pytest.raises(sqlite3.DatabaseError):
         _safe_sql_snapshot("ATTACH DATABASE '/tmp/unsafe.db' AS unsafe;")

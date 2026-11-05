@@ -1087,3 +1087,204 @@ Correction: the preceding merge-resolution entry was appended with a timestamp l
 
 Merge completion addendum for the 2026-11-04T21:27:25Z entry:
 Created merge commit c4ef81de (Merge origin/main into feature/frontend). The working tree is clean; feature/frontend is ahead of origin/feature/frontend by four commits. No test suite was run.
+
+## [2026-11-04T22:20:39Z] SESSION START
+
+tool=Codex
+model=GPT-6
+Repo Root: /workspaces/Ghost-Print
+Branch: feature/frontend
+Worktree: main
+Parent Agent: none
+Language: custom:multi
+Time Remaining: not configured
+
+## [2026-11-04T22:21:40Z] Inspect backend upgrade architecture
+
+User Prompt (verbatim, secrets redacted):
+We are beginning the backend upgrade for GHOSTGUARD.
+
+IMPORTANT: Do not modify any files yet. Do not write or generate implementation code.
+
+I want you to inspect the existing repository thoroughly before making changes.
+
+My goal is to integrate:
+1. A locally hosted open-weight LLM using Ollama.
+2. A real RAG pipeline for retrieving relevant deletion evidence and policies.
+3. AI-assisted evidence interpretation and classification.
+4. A deterministic policy engine that remains the final authority for deletion status.
+5. Integration with the existing Node.js backend.
+
+STRICT RULE: Do not modify the frontend. Do not change HTML, CSS, frontend JavaScript, React components, UI, animations, or existing layouts.
+
+First inspect existing backend/API routes; deletion analysis; dataset CSV schemas; evidence processing; dependencies/configuration; output generation/validation; Python and Node versions; and Ollama/local-model availability. Then report the architecture, reusable and missing pieces, exact intended file changes, compatibility risks, and a staged plan beginning with the smallest working milestone. Do not implement until I approve. Do not assume documented features exist without inspecting them.
+
+Agent Response Summary:
+Inspected backend source, routes, dataset CSV schemas and counts, evidence formats/readers, dependency/configuration files, output generator and structural validator, runtime versions, local Ollama availability, and current Git worktree state. Found existing Node deterministic analysis/export, separate FastAPI deterministic backend, and an optional Python Ollama/RAG/interpreter service proxied by Node; no code was changed. The output template currently has 518 rows, the expected schema, and three status categories.
+
+Actions:
+* Read-only repository and runtime inspection; appended required session and turn log entries.
+
+Context:
+tool=Codex
+model=GPT-6
+branch=feature/frontend
+repo_root=/workspaces/Ghost-Print
+worktree=main
+parent_agent=none
+## [2026-11-05T01:46:08Z] SESSION START
+
+tool=Codex
+model=GPT-6
+Repo Root: /workspaces/Ghost-Print
+Branch: feature/frontend
+Worktree: /workspaces/Ghost-Print
+Parent Agent: none
+Language: custom:Node.js plus Python
+Time Remaining: not configured
+
+## [2026-11-05T01:46:08Z] Read-only backend upgrade inspection
+
+User Prompt (verbatim, secrets redacted):
+We are beginning the backend upgrade for GHOSTGUARD.
+
+IMPORTANT: Do not modify any files yet. Do not write or generate implementation code.
+
+I want you to inspect the existing repository thoroughly before making changes.
+
+My goal is to integrate:
+
+1. A locally hosted open-weight LLM using Ollama.
+2. A real RAG pipeline for retrieving relevant deletion evidence and policies.
+3. AI-assisted evidence interpretation and classification.
+4. A deterministic policy engine that remains the final authority for deletion status.
+5. Integration with the existing Node.js backend.
+
+STRICT RULE: Do not modify the frontend. Do not change HTML, CSS, frontend JavaScript, React components, UI, animations, or existing layouts.
+
+First inspect:
+
+- Existing backend architecture and API routes.
+- Current deletion analysis pipeline.
+- All dataset CSV files and their schemas.
+- Evidence file formats and how they are currently processed.
+- Existing dependencies and project configuration.
+- Current output CSV generation and validation.
+- Available Python and Node.js versions.
+- Whether Ollama or any local model is already installed or configured.
+
+Then give me:
+
+1. A clear explanation of the existing architecture.
+2. What can be reused.
+3. What needs to be added.
+4. The exact files you intend to create or modify.
+5. Any compatibility risks.
+6. A staged implementation plan, starting with the smallest working milestone.
+
+Do not implement anything until I approve the plan. Do not assume that features already exist just because they appear in the project documentation.
+
+Agent Response Summary:
+Inspected the current repository without changing implementation files. The worktree already contains substantial uncommitted backend changes for Ollama, RAG, AI interpretation, Node proxy integration, and tests; these were present before inspection. The existing system also has a deterministic Node export engine and a separate FastAPI application/engine, so I reviewed their actual code and configuration rather than treating the documentation as proof of runtime readiness. Local Python AI dependencies, Ollama, and Tesseract are not installed or available in this environment.
+
+Actions:
+* Read-only source, configuration, dataset schema, and runtime inspection.
+* Appended the required session and turn log entries to log.txt.
+
+Context:
+tool=Codex
+model=GPT-6
+branch=feature/frontend
+repo_root=/workspaces/Ghost-Print
+worktree=/workspaces/Ghost-Print
+parent_agent=none
+
+## [2026-11-05T01:51:16Z] Trace existing AI backend setup
+
+User Prompt (verbatim, secrets redacted):
+We have completed the initial repository inspection. Now I want to move to implementation milestone 1.
+
+IMPORTANT CONTEXT:The worktree already contains substantial uncommitted AI backend changes. These existed before your inspection. Preserve every existing change. Do not reset, overwrite, delete, or recreate existing files.
+
+Our goal is to get the EXISTING implementation running, not rebuild it.
+
+FRONTEND RESTRICTION:Do not modify any frontend files, HTML, CSS, frontend JavaScript, React components, animations, layouts, or assets.
+
+TASK:
+
+1. Inspect the existing AI backend implementation in:
+
+- code/backend/main.py
+- code/backend/ai_service/
+- code/ai-provider.js
+- code/server.js
+- code/requirements-ai.txt
+- code/package.json
+- package.json
+
+2. Trace the complete request flow:   Node API → Python FastAPI → RAG retrieval → Ollama → evidence interpretation → deterministic validation.
+3. Identify:
+
+- Missing dependencies.
+- Python version incompatibilities, especially Python 3.14.
+- Import errors and incorrect module paths.
+- Missing environment variables.
+- Incorrect API URLs or ports.
+- Missing model configuration.
+- Missing database/index initialization.
+- Any code paths that could fail at runtime.
+
+4. Determine the safest supported Python version for the existing dependencies. Do not downgrade or replace the existing environment without approval.
+5. Inspect how Ollama is configured. Confirm whether the current implementation supports local Ollama in Codespaces and what network configuration is required.
+6. Check whether the AI service can start independently of Ollama and whether its health endpoint works without a model.
+7. Verify that AI findings cannot independently change the final deletion status or invent evidence references.
+8. Give me an exact, ordered setup procedure with terminal commands.
+
+RULES:
+
+- Do not modify files yet.
+- Do not install dependencies yet.
+- Do not download models yet.
+- Do not change the frontend.
+- Do not replace existing architecture.
+- Do not claim a test passed unless you actually ran it.
+
+At the end, tell me the FIRST command I should execute to begin setting up the existing backend.
+
+Agent Response Summary:
+Traced the Node AI proxy, FastAPI routes, RAG ingestion/retrieval, Ollama chat and optional embedding calls, finding validation, and deterministic response path. Confirmed Python 3.14.2 has no installed backend dependencies, while Python 3.12.3 is available; inspected official package release metadata and recommend 3.12 as the conservative environment for the existing pins. Found Ollama and Tesseract unavailable, but static startup paths indicate FastAPI can initialize without Ollama if Python dependencies are installed; health reports Ollama unavailable rather than requiring it. No install, model download, implementation change, or test was performed. The only write was this required log entry.
+
+Actions:
+* Read-only source/configuration inspection and environment/version probes; consulted official PyPI metadata for Python compatibility.
+* Appended required per-turn entry to log.txt.
+
+Context:
+tool=Codex
+model=GPT-6
+branch=feature/frontend
+repo_root=/workspaces/Ghost-Print
+worktree=/workspaces/Ghost-Print
+parent_agent=none
+
+## [2026-11-05T05:43:44Z] Finish backend integration verification
+
+User Prompt (verbatim, secrets redacted):
+User provided the attached “GHOSTGUARD | FINAL HACKATHON COMPLETION” mission and asked me to take over remaining implementation and verification, preserve the existing uncommitted backend work, keep the frontend unchanged, generate and validate the final CSV, and not commit or push.
+
+Agent Response Summary:
+Continued with the existing backend implementation and preserved the pre-existing worktree changes. Python tests (27) and Node tests (3 files) passed; FastAPI/Ollama health, Node proxy health, dashboard, static frontend response, and case_37 evidence retrieval were exercised, and the exporter produced 518 rows accepted by the structural validator. The live case_37 AI investigation returned HTTP 503, and the 32-case sample evaluator remains weak (68.75% status accuracy and 3.125% step sequence accuracy), so I am not declaring the application evaluation-ready; the deterministic authority checks pass in unit tests. No frontend files were changed and no commit or push was made.
+
+Actions:
+* Ran Python pytest and Node test suites.
+* Queried live FastAPI, Ollama, Node health/dashboard, frontend root, and Node-proxied evidence retrieval.
+* Generated root output.csv with the existing Node exporter and ran the output validator.
+* Ran the existing sample evaluator and inspected the resulting worktree state.
+* Appended this required per-turn entry to log.txt.
+
+Context:
+tool=Codex
+model=GPT-6
+branch=feature/frontend
+repo_root=/workspaces/Ghost-Print
+worktree=/workspaces/Ghost-Print
+parent_agent=none

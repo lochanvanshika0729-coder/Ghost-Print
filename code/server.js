@@ -2,7 +2,7 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const { fileURLToPath } = require('node:url');
-const { configuration: aiConfiguration, explainCase } = require('./ai-provider');
+const { configuration: aiConfiguration, explainCase, proxyAI, isLoopback } = require('./ai-provider');
 
 const ROOT = path.resolve(__dirname, '..');
 const DATA = path.join(ROOT, 'dataset');
@@ -350,12 +350,61 @@ class Ghostprints {
 function dedupe(items) { const seen=new Set(); return items.filter(x=>{const k=[x.resource,x.system,x.op,x.evidence].join('|'); if(seen.has(k)) return false; seen.add(k); return true;}); }
 const app = new Ghostprints();
 const MIME = { '.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.svg':'image/svg+xml' };
+
+function readJSONBody(req, limit = 64 * 1024) {
+  return new Promise((resolve, reject) => {
+    const chunks = []; let size = 0;
+    req.on('data', chunk => {
+      size += chunk.length;
+      if (size > limit) { reject(new Error('Request body exceeds the local AI request limit.')); req.destroy(); return; }
+      chunks.push(chunk);
+    });
+    req.on('end', () => {
+      try { resolve(JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}')); }
+      catch { reject(new Error('Request body must be valid JSON.')); }
+    });
+    req.on('error', () => reject(new Error('Request body could not be read.')));
+  });
+}
+
+function sendAI(res, route, payload, method = 'POST') {
+  if (['ai/analyze-evidence','ai/explain-case','ai/investigate'].includes(route) && payload?.case_id) {
+    const request = app.requests.find(item => item.case_id === payload.case_id);
+    if (request) payload = { ...payload, deterministic_case: app.analyze(request) };
+  }
+  proxyAI(route, payload, method).then(result => {
+    res.writeHead(result.status, { 'Content-Type':'application/json; charset=utf-8', 'Cache-Control':'no-store' });
+    res.end(JSON.stringify(result.body));
+  }).catch(error => {
+    res.writeHead(503, { 'Content-Type':'application/json; charset=utf-8', 'Cache-Control':'no-store' });
+    res.end(JSON.stringify({ error: String(error?.message || 'Local AI service is unavailable.').slice(0, 180) }));
+  });
+}
+
 const server = http.createServer((req,res)=>{
-  res.setHeader('Access-Control-Allow-Origin','*'); res.setHeader('Access-Control-Allow-Headers','Content-Type'); res.setHeader('Access-Control-Allow-Methods','GET,POST,OPTIONS');
+  const origin = req.headers.origin;
+  if (origin) {
+    try { if (isLoopback(new URL(origin).hostname)) res.setHeader('Access-Control-Allow-Origin', origin); }
+    catch { /* Invalid origins receive no CORS permission. */ }
+    res.setHeader('Vary', 'Origin');
+  }
+  res.setHeader('Access-Control-Allow-Headers','Content-Type'); res.setHeader('Access-Control-Allow-Methods','GET,POST,OPTIONS');
   if(req.method==='OPTIONS'){res.writeHead(204);return res.end();}
   const url=new URL(req.url,'http://localhost'); const parts=url.pathname.split('/').filter(Boolean);
   const json=(code,value)=>{res.writeHead(code,{'Content-Type':'application/json; charset=utf-8'});res.end(JSON.stringify(value));};
   if(url.pathname==='/api/health') { const ai=aiConfiguration(); return json(200,{status:'ok',product:'GHOSTGUARD',requests:app.requests.length,evidence_files:app.manifest.length,ai_configured:ai.enabled,ai_provider:ai.provider,ai_model:ai.model||null}); }
+  if(url.pathname.startsWith('/api/ai/') || (parts[0]==='api'&&parts[1]==='investigations'&&parts[3]==='ai-explanation')) {
+    if(origin) {
+      try { if(!isLoopback(new URL(origin).hostname)) return json(403,{error:'Local AI endpoints accept only loopback browser origins.'}); }
+      catch { return json(403,{error:'Local AI endpoints accept only loopback browser origins.'}); }
+    }
+  }
+  if(url.pathname==='/api/ai/health'&&req.method==='GET') return sendAI(res,'ai/health',undefined,'GET');
+  if(url.pathname.startsWith('/api/ai/')&&req.method==='POST') {
+    const route=url.pathname.slice('/api/'.length);
+    if(!['ai/retrieve-evidence','ai/analyze-evidence','ai/explain-case','ai/investigate'].includes(route)) return json(404,{error:'AI endpoint not found.'});
+    return readJSONBody(req).then(body=>sendAI(res,route,body)).catch(error=>json(400,{error:error.message}));
+  }
   if(url.pathname==='/api/dashboard/summary') return json(200,app.dashboard());
   if(url.pathname==='/api/datasets') return json(200,[{dataset_id:'official-challenge',request_count:app.requests.length,evidence_count:app.manifest.length,files:app.manifest}]);
   if(url.pathname==='/api/datasets/official-challenge') return json(200,{dataset_id:'official-challenge',request_count:app.requests.length,evidence_count:app.manifest.length,manifest:app.manifest,missing:app.manifest.filter(f=>!f.readable)});
@@ -371,7 +420,7 @@ const server = http.createServer((req,res)=>{
     const request=app.requests.find(x=>x.case_id===c.case_id);
     const identity=[...app.identities.values()].find(p=>identifiersAt(p,iso(request?.audit_at)).has(norm(request?.email)));
     const evidenceIds=[...new Set((c.steps||[]).map(s=>s.evidence_id).filter(Boolean))];
-    if(parts[3]==='ai-explanation'&&req.method==='POST') { explainCase(c,request).then(result=>json(200,result)).catch(()=>json(502,{error:'AI explanation could not be generated.'})); return; }
+    if(parts[3]==='ai-explanation'&&req.method==='POST') { explainCase(c,request).then(result=>json(200,result)).catch(error=>json(503,{error:String(error?.message||'Local AI explanation is unavailable.').slice(0,180)})); return; }
     if(parts[3]==='identity') {
       const cutoff=iso(request?.audit_at), emailEvents=(identity?.history||[]).filter(a=>norm(a.field_name)==='email'&&(!cutoff||iso(a.event_time)<=cutoff)).sort((a,b)=>iso(a.event_time)-iso(b.event_time));
       const currentEmail=emailEvents.at(-1)?.new_value||(identity&&(!cutoff||iso(identity.updated_at)<=cutoff)?identity.email:request?.email)||'';

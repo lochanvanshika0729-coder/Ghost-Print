@@ -69,13 +69,13 @@ def values_in(value: Any):
                 yield from values_in(child)
             elif child is not None:
                 yield str(key).casefold(), str(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from values_in(child)
 
 
 def field_value(value: Any, names: set[str]):
     return next((v for k, v in values_in(value) if k in names), None)
-    elif isinstance(value, list):
-        for child in value:
-            yield from values_in(child)
 
 
 def _safe_sql_snapshot(script: str) -> list[dict[str, Any]]:
@@ -88,10 +88,11 @@ def _safe_sql_snapshot(script: str) -> list[dict[str, Any]]:
         except (TypeError, ValueError):
             return 0
     connection.create_function("json_valid", 1, valid_json, deterministic=True)
-    safe = {sqlite3.SQLITE_CREATE_TABLE, sqlite3.SQLITE_INSERT, sqlite3.SQLITE_TRANSACTION,
+    safe = {sqlite3.SQLITE_CREATE_TABLE, sqlite3.SQLITE_CREATE_INDEX,
+            sqlite3.SQLITE_CREATE_TEMP_INDEX, sqlite3.SQLITE_REINDEX, sqlite3.SQLITE_INSERT, sqlite3.SQLITE_TRANSACTION,
             sqlite3.SQLITE_READ, sqlite3.SQLITE_SELECT}
     connection.set_authorizer(lambda action, arg1, arg2, db, trigger:
-                              sqlite3.SQLITE_OK if action in safe or (action == sqlite3.SQLITE_PRAGMA and arg1 == "table_info")
+                              sqlite3.SQLITE_OK if action in safe or (action == sqlite3.SQLITE_PRAGMA and arg1 in {"table_info", "foreign_keys"})
                               or (action == sqlite3.SQLITE_UPDATE and arg1 in {"sqlite_master", "sqlite_temp_master", "sqlite_schema"})
                               or (action == sqlite3.SQLITE_FUNCTION and (arg2 or arg1) in {"json_valid"}) else sqlite3.SQLITE_DENY)
     try:

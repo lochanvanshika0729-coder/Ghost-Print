@@ -14,24 +14,46 @@ Open the URL printed by the server (normally <http://localhost:8000>). If that p
 
 ## Run the FastAPI backend
 
-Python 3.11 or later is required for the FastAPI service. From the repository root, create a virtual environment and install the backend dependencies:
+Python 3.12 is the tested setup for the pinned backend dependencies. From the repository root, create and activate an isolated virtual environment, then install the backend dependencies:
 
 ```powershell
-py -3 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r code\requirements.txt
-python -m uvicorn backend.main:app --app-dir code --reload --host 127.0.0.1 --port 8000
+python3.12 -m venv /tmp/ghostguard-venv
+source /tmp/ghostguard-venv/bin/activate
+python -m pip install -r code/requirements.txt
+RAG_EMBEDDING_PROVIDER=ollama python -m uvicorn backend.main:app --app-dir code --host 127.0.0.1 --port 8001
 ```
 
-Open <http://localhost:8000>. FastAPI serves the existing frontend and its same-origin `/api/*` routes. API documentation is available at <http://localhost:8000/docs>. The service stores parsed investigation results in `code/backend/ghostguard.sqlite3`; uploaded artifacts are isolated under `code/backend/uploads/` and are not automatically used to change a case result.
+The Node app remains on port 8000. FastAPI binds to loopback on port 8001 and supplies the local AI/RAG service consumed by Node. API documentation is available at <http://127.0.0.1:8001/docs>. The service stores parsed investigation results in `code/backend/ghostguard.sqlite3`; uploads are not used to change a case result.
 
-The Node server remains available as the no-install local preview. Do not run it and FastAPI on the same port at once.
+Run FastAPI and Node in separate terminals. FastAPI uses port 8001; Node uses port 8000 and proxies AI requests to FastAPI. `npm run dev` runs the repository's frontend build hook before starting Node; to run only the existing application server without that build step, use `node code/server.js`. The Node app remains available when the optional AI service is stopped, and AI routes return a local-service error instead of taking down Node.
 
-## Optional AI audit explanations
+## Local LLM and RAG
 
-The audit detail page has an **Explain with AI** button. To enable it, copy `code/.env.example` to `code/.env` and set `LLM_API_KEY`. The server defaults to the OpenAI-compatible Chat Completions endpoint and the `gpt-4.1-mini` model; `LLM_BASE_URL` or `LLM_CHAT_COMPLETIONS_URL` can select a compatible provider endpoint. `LLM_PROVIDER` is a display label. Restart the Node server after changing these settings. The server reads `.env` locally, and `.gitignore` excludes it.
+The **Explain with AI** action and the added investigation endpoints use Ollama on the same machine. No AI API key, external model endpoint, or cloud provider is used. Copy the local defaults and install Ollama using its official installer for your operating system:
 
-The app makes no model request until a user clicks the button. That request sends a minimized case summary: status, audit cutoff, finding operations, system labels, resource categories, policy actions, and evidence references. It excludes subject identifiers, names, emails, phone numbers, raw evidence excerpts, and resource IDs. The AI provides an advisory explanation only; the evidence and policy engine remains responsible for status and remediation. Provider usage may incur charges under your account. Without a configured key, the UI explains how to configure AI and continues to work without it.
+```bash
+cp code/.env.example code/.env
+ollama pull qwen3:1.7b
+```
+
+This workspace has about 7.8 GiB system memory available to the container and no detected NVIDIA GPU. Qwen3 1.7B Q4 is the conservative default; Ollama lists the model at about 1.4 GB. A smaller fallback is `qwen3:0.6b`; `qwen3:4b` is a higher-memory option. Change `OLLAMA_MODEL` in `code/.env` and pull that exact tag before use. [Ollama Qwen3 model tags](https://ollama.com/library/qwen3/tags)
+
+The configured chat model is `qwen3:1.7b`. Ollama must run on the same machine at `127.0.0.1:11434`; the implementation accepts loopback Ollama URLs only. Pull both the chat and embedding models before starting semantic RAG:
+
+```bash
+ollama pull qwen3:1.7b
+ollama pull nomic-embed-text
+```
+
+Set `RAG_EMBEDDING_PROVIDER=ollama` for the API process. Sentence Transformers remains an optional alternative from `code/requirements-ai.txt`; its model must already be cached because runtime loading is local-only. The SQLite vector store is `code/backend/ai_rag.sqlite3` and is ignored by Git. Existing vectors are reused; requests do not automatically re-embed missing or stale documents. `/ai/health` reports embedding availability separately from index readiness and coverage. Exact retrieval continues when semantic search is unavailable or the index is partial.
+
+The dataset is read from `dataset/`; the RAG ingestor intentionally excludes sample answers and generated output. It indexes request, identity, identity-history, activity, policy, and manifest-linked evidence files. Supported evidence includes text/log, CSV-like text, JSON, and SQLite-compatible SQL. PDF text extraction needs the standard backend dependency; image OCR additionally needs Tesseract installed. Duplicate evidence chunks retain all source evidence IDs and filenames.
+
+Structured exact matching of the current and historical identifiers, case IDs, evidence IDs, activity records, and policy categories runs before semantic search. Semantic similarity never establishes subject identity. The LLM only interprets exact identity-linked evidence and cannot set deletion status, change steps, invent evidence IDs, or claim remediation was executed. Every returned AI finding must cite an in-cutoff evidence ID, a source system found in the evidence or deterministic case, and a policy action present in `deletion_rules.csv`. Invalid references are discarded. The deterministic Node audit result remains the authority for `COMPLETE`, `INCOMPLETE`, and `NOT_APPLICABLE`.
+
+The Python service exposes `GET /ai/health`, `POST /ai/retrieve-evidence`, `POST /ai/analyze-evidence`, `POST /ai/explain-case`, and `POST /ai/investigate`. Node proxies the same routes under `/api/ai/*`; the existing `POST /api/investigations/{case_id}/ai-explanation` route remains available for the current UI. The service binds to `127.0.0.1`; Node rejects non-loopback browser origins for local AI routes. Evidence text and model prompts are not written to logs. Retrieved evidence is treated as untrusted input and prompt-injection instructions inside it are ignored.
+
+The service reports Ollama and embedding model availability separately from vector-index readiness. AI investigation is advisory: the Node audit result is passed to FastAPI and returned unchanged alongside AI findings. AI findings are checked against retrieved, identity-linked evidence IDs, source systems, and supplied policy rules; they cannot set the deletion status or remediation steps. Live model output is not a substitute for review of the underlying evidence. Keep Ollama, the service, and its local index on a machine authorized to hold this dataset.
 
 To set the required challenge output at repository root:
 
@@ -52,7 +74,8 @@ The browser service adapter is `frontend/api.js`; illustrative display-only exam
 - `GET /api/investigations/{case_id}/identity|findings|remediation|verification|graph|risks|certificate`
 - `GET /api/investigations/{case_id}/evidence|timeline`
 - `GET /api/investigations/{case_id}/graph` (unique resource observations and only explicitly evidenced resource-to-resource relationships)
-- `POST /api/investigations/{case_id}/ai-explanation` (optional, user-triggered AI explanation)
+- `POST /api/investigations/{case_id}/ai-explanation` (local Ollama explanation, user-triggered)
+- `GET /api/ai/health`, `POST /api/ai/retrieve-evidence`, `POST /api/ai/analyze-evidence`, `POST /api/ai/explain-case`, and `POST /api/ai/investigate` (local FastAPI proxy endpoints)
 - `GET /api/datasets/official-challenge`
 - `POST /api/datasets/upload` (validated, quarantined upload)
 - `GET /api/risk-analysis`
@@ -68,7 +91,7 @@ The repository’s participant evidence currently has resource observations but 
 
 Evidence matching, policy coverage, OCR support, and temporal reconstruction have known limitations; see `evaluation/evaluation_report.md`. Structural output validation does not establish prediction accuracy.
 
-Run the backend unit checks after installing dependencies with `python -m pytest code/backend/test_engine.py`.
+Run the Node suite with `npm test`. Run dependency-free AI/RAG unit checks from `code/` using `python -m unittest backend.ai_service.test_ai_service -v`. After installing backend dependencies, run all Python checks with `python -m pytest backend/test_engine.py backend/ai_service/test_ai_service.py`.
 
 ## Evidence and integrity boundaries
 

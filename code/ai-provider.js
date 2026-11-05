@@ -1,5 +1,6 @@
 const fs = require('node:fs');
 const path = require('node:path');
+const net = require('node:net');
 
 function loadLocalEnv() {
   const file = path.join(__dirname, '.env');
@@ -15,74 +16,58 @@ function loadLocalEnv() {
 
 loadLocalEnv();
 
-function configuration() {
-  const apiKey = process.env.LLM_API_KEY || process.env.OPENAI_API_KEY || '';
-  const model = 'gpt-4.1-mini';
-  const base = (process.env.LLM_BASE_URL || 'https://api.openai.com/v1').replace(/\/+$/, '');
-  const endpoint = process.env.LLM_CHAT_COMPLETIONS_URL || `${base}/chat/completions`;
-  return { enabled: Boolean(apiKey), provider: process.env.LLM_PROVIDER || (process.env.OPENAI_API_KEY ? 'OpenAI' : 'OpenAI-compatible'), model, endpoint, apiKey };
+function isLoopback(hostname) {
+  const host = String(hostname || '').replace(/^\[|\]$/g, '').toLowerCase();
+  if (host === 'localhost' || host.endsWith('.localhost') || host === '::1') return true;
+  return net.isIP(host) === 4 && host.startsWith('127.');
 }
 
-function minimizedCase(caseResult, request) {
-  const findings = (caseResult.findings || []).map((item, index) => ({
-    finding_number: index + 1,
-    operation: item.op || item.operation || '',
-    system: item.system || item.system_id || '',
-    resource_type: String(item.category || item.data_category || '').replace(/[^A-Za-z0-9_ -]/g, '').slice(0, 60),
-    policy_action: item.policy_action || '',
-    evidence_reference: item.evidence || item.evidence_id || ''
-  }));
-  return {
-    status: caseResult.deletion_status,
-    audit_cutoff: request?.audit_at || '',
-    evidence_gap: Boolean(caseResult.missing_evidence || (!findings.length && caseResult.deletion_status === 'INCOMPLETE')),
-    findings
-  };
+function configuration() {
+  const serviceUrl = (process.env.GHOSTGUARD_AI_URL || 'http://127.0.0.1:8001').replace(/\/+$/, '');
+  try {
+    const parsed = new URL(serviceUrl);
+    if (!['http:', 'https:'].includes(parsed.protocol) || !isLoopback(parsed.hostname) || parsed.username || parsed.password) {
+      return { enabled: false, provider: 'Ollama (local)', model: process.env.OLLAMA_MODEL || 'qwen3:1.7b',
+        serviceUrl: '', message: 'The AI service URL must point to a loopback host.' };
+    }
+  } catch {
+    return { enabled: false, provider: 'Ollama (local)', model: process.env.OLLAMA_MODEL || 'qwen3:1.7b',
+      serviceUrl: '', message: 'The AI service URL is invalid.' };
+  }
+  return { enabled: true, provider: 'Ollama (local)', model: process.env.OLLAMA_MODEL || 'qwen3:1.7b', serviceUrl };
+}
+
+async function proxyAI(route, payload, method = 'POST') {
+  const config = configuration();
+  if (!config.enabled) throw new Error(config.message || 'Local AI service is disabled.');
+  const safePath = String(route || '').replace(/^\/+/, '');
+  if (!['ai/health', 'ai/retrieve-evidence', 'ai/analyze-evidence', 'ai/explain-case', 'ai/investigate'].includes(safePath)) {
+    throw new Error('AI endpoint is not allowed.');
+  }
+  let response;
+  try {
+    response = await fetch(`${config.serviceUrl}/${safePath}`, {
+      method,
+      headers: payload === undefined ? {} : { 'Content-Type': 'application/json' },
+      body: payload === undefined ? undefined : JSON.stringify(payload),
+      signal: AbortSignal.timeout(95000)
+    });
+  } catch (error) {
+    const reason = error?.name === 'TimeoutError' ? 'timed out' : 'is unavailable';
+    throw new Error(`Local AI service ${reason}. Start it on 127.0.0.1:8001.`);
+  }
+  let data;
+  try { data = await response.json(); }
+  catch { throw new Error('Local AI service returned an invalid response.'); }
+  return { status: response.status, body: data };
 }
 
 async function explainCase(caseResult, request) {
-  const config = configuration();
-  if (!config.enabled) return { configured: false, provider: config.provider, model: config.model || null, explanation: null,
-    message: 'AI explanations are not configured. Set LLM_API_KEY in code/.env, then restart the server.' };
-
-  const facts = minimizedCase(caseResult, request);
-  const body = {
-    model: config.model,
-    temperature: 0.1,
-    max_tokens: 350,
-    response_format: { type: 'json_object' },
-    messages: [
-      { role: 'system', content: 'Explain a deletion audit to a beginner in concise plain language. Use only the supplied structured facts. Do not decide or alter the status, invent databases, identifiers, evidence, policies, or findings, and do not propose actions beyond the stated policy_action. If evidence_gap is true, say that absence is unverified rather than claiming data remains. Return JSON with keys summary (string) and points (array of strings, at most 4).' },
-      { role: 'user', content: JSON.stringify(facts) }
-    ]
-  };
-  let response;
-  try {
-    response = await fetch(config.endpoint, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${config.apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(25000)
-    });
-  } catch (error) {
-    return { configured: true, provider: config.provider, model: config.model, explanation: null, message: `AI service could not be reached (${error.name === 'TimeoutError' ? 'timeout' : 'network error'}).` };
-  }
-  if (!response.ok) return { configured: true, provider: config.provider, model: config.model, explanation: null, message: `AI provider returned HTTP ${response.status}. Check the provider URL, model, and key.` };
-
-  let payload;
-  try { payload = await response.json(); }
-  catch { return { configured: true, provider: config.provider, model: config.model, explanation: null, message: 'AI provider returned an unreadable response.' }; }
-  const content = payload?.choices?.[0]?.message?.content;
-  if (typeof content !== 'string') return { configured: true, provider: config.provider, model: config.model, explanation: null, message: 'AI provider response did not contain a text explanation.' };
-  try {
-    const explanation = JSON.parse(content);
-    const summary = typeof explanation.summary === 'string' ? explanation.summary.slice(0, 1200) : '';
-    const points = Array.isArray(explanation.points) ? explanation.points.filter(x => typeof x === 'string').slice(0, 4).map(x => x.slice(0, 400)) : [];
-    if (!summary) throw new Error('Missing summary');
-    return { configured: true, provider: config.provider, model: config.model, explanation: { summary, points }, usage: payload.usage || null };
-  } catch {
-    return { configured: true, provider: config.provider, model: config.model, explanation: null, message: 'AI provider response did not match the required explanation format.' };
-  }
+  const result = await proxyAI('ai/explain-case', {
+    case_id: String(caseResult?.case_id || request?.case_id || ''),
+    deterministic_case: caseResult || undefined
+  });
+  return result.body;
 }
 
-module.exports = { configuration, explainCase, minimizedCase };
+module.exports = { configuration, explainCase, isLoopback, proxyAI };

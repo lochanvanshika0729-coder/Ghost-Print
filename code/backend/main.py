@@ -13,9 +13,11 @@ from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from .db import CODE_DIR, DatasetFile, SessionLocal, init_db
-from .ai_provider import explain_case
 from .engine import AuditEngine, MAX_FILE_BYTES
 from .schemas import CaseResponse, DashboardResponse, HealthResponse, IdentityResponse
+from .ai_service.schemas import AnalyzeEvidenceRequest, CaseRequest, ExplainCaseRequest, InvestigateRequest, RetrievalRequest
+from .ai_service.services.audit_service import LocalAIService
+from .ai_service.llm.ollama_client import OllamaError
 
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"), format="%(asctime)s %(levelname)s %(name)s %(message)s")
 log = logging.getLogger("ghostguard.api")
@@ -27,6 +29,7 @@ async def lifespan(app: FastAPI):
     init_db()
     engine = AuditEngine()
     app.state.audit_engine = engine
+    app.state.local_ai = LocalAIService(deterministic_engine=engine)
     with SessionLocal() as db:
         for entry in engine.dataset()["manifest"]:
             row = db.get(DatasetFile, entry["file_id"])
@@ -54,7 +57,8 @@ async def api_http_error(request, exc: HTTPException):
 
 @app.exception_handler(RequestValidationError)
 async def api_validation_error(request, exc: RequestValidationError):
-    return JSONResponse(status_code=422, content={"error":"Invalid request parameters", "details":exc.errors()})
+    safe_errors = [{"location": error.get("loc", []), "message": error.get("msg", "Invalid value"), "type": error.get("type", "value_error")} for error in exc.errors()]
+    return JSONResponse(status_code=422, content={"error":"Invalid request parameters", "details":safe_errors})
 
 
 def service() -> AuditEngine:
@@ -62,6 +66,23 @@ def service() -> AuditEngine:
     if engine is None:
         raise HTTPException(status_code=503, detail={"error":"Audit service is still starting"})
     return engine
+
+
+def local_ai() -> LocalAIService:
+    current = getattr(app.state, "local_ai", None)
+    if current is None:
+        raise HTTPException(status_code=503, detail={"error":"Local AI service is still starting"})
+    return current
+
+
+def ai_error(exc: Exception) -> HTTPException:
+    if isinstance(exc, KeyError):
+        return HTTPException(status_code=404, detail={"error":str(exc).strip("'")})
+    if isinstance(exc, OllamaError):
+        return HTTPException(status_code=503, detail={"error":str(exc)})
+    if isinstance(exc, ValueError):
+        return HTTPException(status_code=502, detail={"error":"Local AI response could not be validated"})
+    return HTTPException(status_code=500, detail={"error":"Local AI request failed"})
 
 
 def public_case(case: dict) -> dict:
@@ -72,6 +93,49 @@ def public_case(case: dict) -> dict:
 def health():
     current = service()
     return {"status":"ok","product":"GHOSTGUARD","requests":len(current.requests),"evidence_files":len(current.evidence)}
+
+
+@app.get("/ai/health")
+def ai_health():
+    return local_ai().health()
+
+
+@app.post("/ai/retrieve-evidence")
+def ai_retrieve(payload: RetrievalRequest):
+    try:
+        return local_ai().retrieve_evidence(case_id=payload.case_id, query=payload.query,
+                                            evidence_id=payload.evidence_id, system_id=payload.system_id,
+                                            limit=payload.limit)
+    except Exception as exc:
+        raise ai_error(exc) from None
+
+
+@app.post("/ai/analyze-evidence")
+def ai_analyze(payload: AnalyzeEvidenceRequest):
+    try:
+        local_ai().require_model()
+        return local_ai().analyze_evidence(payload.case_id, evidence_id=payload.evidence_id, query=payload.query,
+                                           deterministic_case=payload.deterministic_case)
+    except Exception as exc:
+        raise ai_error(exc) from None
+
+
+@app.post("/ai/explain-case")
+def ai_explain(payload: ExplainCaseRequest):
+    try:
+        local_ai().require_model()
+        return local_ai().explain_case(payload.case_id, payload.deterministic_case)
+    except Exception as exc:
+        raise ai_error(exc) from None
+
+
+@app.post("/ai/investigate")
+def ai_investigate(payload: InvestigateRequest):
+    try:
+        local_ai().require_model()
+        return local_ai().investigate(payload.case_id, payload.deterministic_case)
+    except Exception as exc:
+        raise ai_error(exc) from None
 
 
 @app.get("/api/dashboard/summary", response_model=DashboardResponse)
@@ -152,7 +216,11 @@ def findings(case_id: str):
 @app.post("/api/investigations/{case_id}/ai-explanation")
 def ai_explanation(case_id: str):
     """Generate an advisory explanation only after an explicit UI request."""
-    return explain_case(get_case(case_id))
+    try:
+        local_ai().require_model()
+        return local_ai().explain_case(case_id, get_case(case_id))
+    except Exception as exc:
+        raise ai_error(exc) from None
 
 
 @app.get("/api/investigations/{case_id}/evidence")
