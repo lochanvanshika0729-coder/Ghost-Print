@@ -1,0 +1,4 @@
+.env
+.local_index/
+__pycache__/
+*.py[cod]

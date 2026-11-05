@@ -24,6 +24,8 @@ class IdentityResponse(BaseModel):
     user_id: str | None = None
     current_email: str | None = None
     historical_emails: list[str] = Field(default_factory=list)
+    historical_identifiers: dict[str, list[str]] = Field(default_factory=dict)
+    known_identifiers: list[str] = Field(default_factory=list)
     resolution_status: str = "UNRESOLVED"
     evidence_ids: list[str] = Field(default_factory=list)
 

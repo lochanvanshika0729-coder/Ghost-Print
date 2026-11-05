@@ -43,7 +43,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="GHOSTGUARD API", version="1.0.0", description="Evidence-first deletion audit API", lifespan=lifespan)
+app = FastAPI(title="GHOST PRINT API", version="1.0.0", description="Evidence-first deletion audit API", lifespan=lifespan)
 origins = [x.strip() for x in os.getenv("GHOSTGUARD_CORS_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000,http://localhost:5173,http://127.0.0.1:5173").split(",") if x.strip()]
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=False, allow_methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type"])
 
@@ -92,7 +92,7 @@ def public_case(case: dict) -> dict:
 @app.get("/api/health", response_model=HealthResponse)
 def health():
     current = service()
-    return {"status":"ok","product":"GHOSTGUARD","requests":len(current.requests),"evidence_files":len(current.evidence)}
+    return {"status":"ok","product":"GHOST PRINT","requests":len(current.requests),"evidence_files":len(current.evidence)}
 
 
 @app.get("/ai/health")
@@ -141,6 +141,27 @@ def ai_investigate(payload: InvestigateRequest):
 @app.get("/api/dashboard/summary", response_model=DashboardResponse)
 def dashboard():
     return service().dashboard()
+
+
+@app.get("/api/forensics/aggregate")
+def forensics_aggregate():
+    """Return the fields needed by cross-case charts without subject identifiers."""
+    cases = service().cases()
+    return {
+        "total": len(cases),
+        "items": [{
+            "case_id": case["case_id"],
+            "deletion_status": case["deletion_status"],
+            "risk_level": case.get("risk_level", "UNKNOWN"),
+            "request": {
+                "requested_at": (case.get("request") or {}).get("requested_at", ""),
+                "audit_at": (case.get("request") or {}).get("audit_at", ""),
+            },
+            "steps": [{key: step.get(key, "") for key in (
+                "step_no", "phase", "system_id", "resource_id", "operation", "state", "evidence_id"
+            )} for step in case.get("steps", [])],
+        } for case in cases],
+    }
 
 
 @app.get("/api/datasets")

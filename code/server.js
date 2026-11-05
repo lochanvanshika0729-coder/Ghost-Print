@@ -406,6 +406,10 @@ const server = http.createServer((req,res)=>{
     return readJSONBody(req).then(body=>sendAI(res,route,body)).catch(error=>json(400,{error:error.message}));
   }
   if(url.pathname==='/api/dashboard/summary') return json(200,app.dashboard());
+  if(url.pathname==='/api/forensics/aggregate') {
+    const cases=app.all();
+    return json(200,{total:cases.length,items:cases.map(c=>{const request=app.requests.find(r=>r.case_id===c.case_id)||{};return {case_id:c.case_id,deletion_status:c.deletion_status,risk_level:c.risk_level||'UNKNOWN',request:{requested_at:request.requested_at||'',audit_at:request.audit_at||''},steps:(c.steps||[]).map(s=>({step_no:s.step_no,phase:s.phase,system_id:s.system_id,resource_id:s.resource_id,operation:s.operation,state:s.state,evidence_id:s.evidence_id||''}))}})});
+  }
   if(url.pathname==='/api/datasets') return json(200,[{dataset_id:'official-challenge',request_count:app.requests.length,evidence_count:app.manifest.length,files:app.manifest}]);
   if(url.pathname==='/api/datasets/official-challenge') return json(200,{dataset_id:'official-challenge',request_count:app.requests.length,evidence_count:app.manifest.length,manifest:app.manifest,missing:app.manifest.filter(f=>!f.readable)});
   if(url.pathname==='/api/investigations/run' && req.method==='POST') return json(200,{processed:app.requests.length,results:app.run().length});
@@ -422,10 +426,15 @@ const server = http.createServer((req,res)=>{
     const evidenceIds=[...new Set((c.steps||[]).map(s=>s.evidence_id).filter(Boolean))];
     if(parts[3]==='ai-explanation'&&req.method==='POST') { explainCase(c,request).then(result=>json(200,result)).catch(error=>json(503,{error:String(error?.message||'Local AI explanation is unavailable.').slice(0,180)})); return; }
     if(parts[3]==='identity') {
-      const cutoff=iso(request?.audit_at), emailEvents=(identity?.history||[]).filter(a=>norm(a.field_name)==='email'&&(!cutoff||iso(a.event_time)<=cutoff)).sort((a,b)=>iso(a.event_time)-iso(b.event_time));
-      const currentEmail=emailEvents.at(-1)?.new_value||(identity&&(!cutoff||iso(identity.updated_at)<=cutoff)?identity.email:request?.email)||'';
-      const historicalEmails=[...new Set(emailEvents.map(a=>a.old_value).filter(Boolean).filter(v=>norm(v)!==norm(currentEmail)))];
-      return json(200,{user_id:identity?.user_id||'',current_email:currentEmail,historical_emails:historicalEmails,resolution_status:identity?'RESOLVED':'UNRESOLVED',evidence_ids:evidenceIds});
+      const cutoff=iso(request?.audit_at), history=(identity?.history||[]).filter(a=>!cutoff||!iso(a.event_time)||iso(a.event_time)<=cutoff), emailEvents=history.filter(a=>norm(a.field_name)==='email').sort((a,b)=>iso(a.event_time)-iso(b.event_time));
+      const snapshotInScope=Boolean(identity&&(!cutoff||!iso(identity.updated_at)||iso(identity.updated_at)<=cutoff));
+      const currentEmail=emailEvents.at(-1)?.new_value||(snapshotInScope?identity.email:request?.email)||'';
+      const historicalEmails=[...new Set(emailEvents.flatMap(a=>[a.old_value,a.new_value]).filter(Boolean).filter(v=>norm(v)!==norm(currentEmail)))];
+      const historicalIdentifiers={},knownIdentifiers=new Set(identity?.user_id?[identity.user_id]:[]);
+      if(snapshotInScope)for(const field of ['email','name','phone','email_hash'])if(identity?.[field])knownIdentifiers.add(identity[field]);
+      for(const event of history){const field=norm(event.field_name);if(!['email','name','phone','email_hash'].includes(field))continue;if(!historicalIdentifiers[field])historicalIdentifiers[field]=new Set();for(const key of ['old_value','new_value'])if(event[key]){historicalIdentifiers[field].add(event[key]);knownIdentifiers.add(event[key]);}}
+      if(currentEmail&&historicalIdentifiers.email)historicalIdentifiers.email.delete(currentEmail);
+      return json(200,{user_id:identity?.user_id||'',current_email:currentEmail,historical_emails:historicalEmails,historical_identifiers:Object.fromEntries(Object.entries(historicalIdentifiers).map(([key,values])=>[key,[...values]]).filter(([,values])=>values.length)),known_identifiers:[...knownIdentifiers],resolution_status:identity?'RESOLVED':'UNRESOLVED',evidence_ids:evidenceIds});
     }
     if(parts[3]==='findings') return json(200,(c.findings||[]).map(s=>{
       const resourceId=s.resource||s.resource_id;const systemId=s.system||s.system_id;const operation=s.op||s.operation;const evidenceId=s.evidence||s.evidence_id;
@@ -450,7 +459,8 @@ const server = http.createServer((req,res)=>{
   if(url.pathname==='/api/reports/export') { const body=app.export(); res.writeHead(200,{'Content-Type':'text/csv; charset=utf-8','Content-Disposition':'attachment; filename="output.csv"'}); return res.end(body); }
   if(url.pathname==='/api/evidence') return json(200,app.manifest);
   if(req.method==='POST'&&url.pathname==='/api/datasets/upload') return json(400,{error:'Upload is disabled for this challenge build. Evidence ingestion is read-only and uses the participant dataset manifest.'});
-  const filename=parts.length?path.resolve(__dirname,'frontend',...parts):path.join(__dirname,'frontend','index.html');
+  const isDashboardRoute=url.pathname==='/dashboard'||url.pathname==='/dashboard/';
+  const filename=url.pathname==='/'?path.join(__dirname,'frontend','landing.html'):isDashboardRoute?path.join(__dirname,'frontend','index.html'):parts.length?path.resolve(__dirname,'frontend',...parts):path.join(__dirname,'frontend','landing.html');
   const rel=path.relative(path.join(__dirname,'frontend'),filename); if(rel.startsWith('..')||path.isAbsolute(rel)) return json(403,{error:'Invalid path'});
   fs.readFile(filename,(err,content)=>{if(err){res.writeHead(404);return res.end('Not found');}res.writeHead(200,{'Content-Type':MIME[path.extname(filename)]||'application/octet-stream'});res.end(content);});
 });
@@ -484,9 +494,9 @@ if (require.main===module) {
       if(error.code==='EADDRINUSE'&&!process.env.PORT){
         const busy=PORT;PORT+=1;console.warn(`Port ${busy} is occupied; trying ${PORT}. Set PORT to choose another port.`);server.listen(PORT);return;
       }
-      console.error(`GHOSTGUARD could not listen on port ${PORT}: ${error.message}`);process.exitCode=1;
+      console.error(`GHOST PRINT could not listen on port ${PORT}: ${error.message}`);process.exitCode=1;
     });
-    server.on('listening',()=>console.log(`GHOSTGUARD listening on http://localhost:${server.address().port}`));
+    server.on('listening',()=>console.log(`GHOST PRINT listening on http://localhost:${server.address().port}`));
     server.listen(PORT);
   }
 }

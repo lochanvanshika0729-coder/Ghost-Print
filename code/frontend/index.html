@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#100e11" />
   <meta name="color-scheme" content="dark" />
-  <title>GHOSTGUARD — A Forensic Record</title>
+  <title>GHOST PRINT — A Forensic Record</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Instrument+Sans:wght@400;500;600;700&family=Pinyon+Script&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -13,18 +13,20 @@
   <link rel="stylesheet" href="/premium.css" />
   <link rel="stylesheet" href="/reasons.css" />
   <link rel="stylesheet" href="/lineage.css" />
+  <link rel="stylesheet" href="/forensics.css" />
 </head>
 <body>
   <div class="ambient-dust" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
   <div class="app-shell">
     <aside class="sidebar" id="sidebar">
-      <a class="brand" href="#overview"><span class="brand-mark">G</span><span class="brand-copy"><b>GHOSTGUARD</b><small>Data Deletion Intelligence</small></span></a>
+      <a class="brand" href="#overview"><span class="brand-mark">G</span><span class="brand-copy"><b>GHOST PRINT</b><small>Data Deletion Intelligence</small></span></a>
       <div class="nav-label">WORKSPACE</div>
       <nav class="nav-group" aria-label="Main navigation">
         <a href="#overview" data-view="overview" class="nav-link active"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1"/><rect x="13.5" y="3.5" width="7" height="4" rx="1"/><rect x="13.5" y="10.5" width="7" height="10" rx="1"/><rect x="3.5" y="13.5" width="7" height="7" rx="1"/></svg></span>Overview</a>
         <a href="#audits" data-view="audits" class="nav-link"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5M8.5 10.8h4.6M10.8 8.5v4.6"/></svg></span>Deletion Audits <b id="case-count">—</b></a>
         <a href="#lineage" data-view="lineage" class="nav-link"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="6" r="2"/><circle cx="18.5" cy="5" r="2"/><circle cx="12" cy="18.5" r="2"/><path d="m7 6 9.5-.8M6.2 7.8l4.5 8.8m6.2-9.7-4 9.7"/></svg></span>Data Lineage</a>
         <a href="#risk" data-view="risk" class="nav-link"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2 21 20H3z"/><path d="M12 9v4.5m0 3h.01"/></svg></span>Risk Analysis</a>
+        <a href="#forensics" data-view="forensics" class="nav-link"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.4 15.4 5 5M7.5 12h2l1.4-3 2.1 5 1.2-2h1.8"/></svg></span>Forensics</a>
         <a href="#certificates" data-view="certificates" class="nav-link"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l4 4V20H6z"/><path d="M14.5 3.5V8h4.5M9 12h7m-7 3h7m-7 3h4"/></svg></span>Certificates</a>
         <a href="#reports" data-view="reports" class="nav-link"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5V4.5m0 15h16"/><path d="m7.5 15 4-4 3 2 5-6"/><path d="M16.5 7H20v3.5"/></svg></span>Reports</a>
       </nav>
@@ -40,8 +42,8 @@
         <div class="breadcrumbs"><span>Workspace</span><b>/</b><strong id="crumb">Overview</strong></div>
         <div class="top-actions"><label class="global-search"><span>⌕</span><input id="global-search" placeholder="Search cases or identifiers…" aria-label="Search audits" /><kbd>⌘ K</kbd></label><button class="icon-button notification" id="notifications" title="Notifications">♧<i></i></button><button class="profile-button" id="top-profile"><span class="avatar small-avatar">SA</span><span>Security Administrator</span><span>⌄</span></button></div>
       </header>
-      <section class="page-content" id="app"><div class="loading"><span class="spinner"></span> Loading GHOSTGUARD…</div></section>
-      <footer><span>GHOSTGUARD</span><i></i> Evidence-backed deletion review <span class="footer-right">Illustrative risk indicators · No external systems modified</span></footer>
+      <section class="page-content" id="app"><div class="loading"><span class="spinner"></span> Loading GHOST PRINT…</div></section>
+      <footer><span>GHOST PRINT</span><i></i> Evidence-backed deletion review <span class="footer-right">Illustrative risk indicators · No external systems modified</span></footer>
     </main>
   </div>
   <canvas class="cinematic-cursor-layer" id="cinematic-cursor-layer" aria-hidden="true"></canvas>

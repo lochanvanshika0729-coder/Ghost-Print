@@ -1,0 +1,9 @@
+{
+  "documents_dir": "sample_policies",
+  "index_path": ".local_index/policy_vectors.sqlite3",
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "chunk_size_words": 180,
+  "chunk_overlap_words": 35,
+  "top_k": 5,
+  "minimum_similarity": 0.28
+}

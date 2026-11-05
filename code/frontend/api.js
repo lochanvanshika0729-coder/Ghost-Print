@@ -14,6 +14,7 @@
   window.GhostguardAPI = {
     health: () => request('/api/health'),
     dashboard: () => request('/api/dashboard/summary'),
+    forensics: () => request('/api/forensics/aggregate'),
     requests: (filters = {}) => request(`/api/investigations?${qs(filters)}`),
     audit: (id) => request(`/api/investigations/${encodeURIComponent(id)}`),
     identity: (id) => request(`/api/investigations/${encodeURIComponent(id)}/identity`),
